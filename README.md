@@ -128,6 +128,7 @@ php bin/phpunit /path/to/testfile.php
 
 ## Notes
 - Symfony Mailer handles email failover natively via DSN string
+- PHP Codesniffer was used in order to fix code in PSR-12 standard
 
 ---
 
