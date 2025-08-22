@@ -1,51 +1,131 @@
-# Symfony Docker
+# Notification Service
 
-A [Docker](https://www.docker.com/)-based installer and runtime for the [Symfony](https://symfony.com) web framework,
-with [FrankenPHP](https://frankenphp.dev) and [Caddy](https://caddyserver.com/) inside!
+This service provides simple notification system capable of sending messages via multiple channels (e.g., SMS, Email), with support for **provider failover**, **rate limiting**, **channel configuration** and basic **tracking**.
 
-![CI](https://github.com/dunglas/symfony-docker/workflows/CI/badge.svg)
+---
 
-## Getting Started
+## Architecture
+- **Domain-driven Design** structure `Domain`, `Infrastructure`, `Application`
+- **NotificationSender** dispatches notifications to one or more channels
+- Each channel uses **FailoverNotifier**, which cascades through providers on failure
+- **NotifierRegistry** manages channel-to-notifier maping
+- Doctrine is used track notifications
 
-1. If not already done, [install Docker Compose](https://docs.docker.com/compose/install/) (v2.10+)
-2. Run `docker compose build --pull --no-cache` to build fresh images
-3. Run `docker compose up --wait` to set up and start a fresh Symfony project
-4. Open `https://localhost` in your favorite web browser and [accept the auto-generated TLS certificate](https://stackoverflow.com/a/15076602/1352334)
-5. Run `docker compose down --remove-orphans` to stop the Docker containers.
+---
 
 ## Features
 
-* Production, development and CI ready
-* Just 1 service by default
-* Blazing-fast performance thanks to [the worker mode of FrankenPHP](https://github.com/dunglas/frankenphp/blob/main/docs/worker.md) (automatically enabled in prod mode)
-* [Installation of extra Docker Compose services](docs/extra-services.md) with Symfony Flex
-* Automatic HTTPS (in dev and prod)
-* HTTP/3 and [Early Hints](https://symfony.com/blog/new-in-symfony-6-3-early-hints) support
-* Real-time messaging thanks to a built-in [Mercure hub](https://symfony.com/doc/current/mercure.html)
-* [Vulcain](https://vulcain.rocks) support
-* Native [XDebug](docs/xdebug.md) integration
-* Super-readable configuration
+### Multi-channel notifications
+- Send a single notification via multiple channels (e.g. `email` and `sms`)
+- Channel list is part of the `Notification` model
 
-**Enjoy!**
+### Failover support
+- Providers (Twilio, Vonage) are wrapped in a `FailoverNotifier`
+- Retry attempts and delay are configurable
 
-## Docs
+### Rate limiting
+- Uses Symfony RateLimiter to prevent over-notifying users
+- Example: max 300 SMS per hour per user
 
-1. [Options available](docs/options.md)
-2. [Using Symfony Docker with an existing project](docs/existing-project.md)
-3. [Support for extra services](docs/extra-services.md)
-4. [Deploying in production](docs/production.md)
-5. [Debugging with Xdebug](docs/xdebug.md)
-6. [TLS Certificates](docs/tls.md)
-7. [Using MySQL instead of PostgreSQL](docs/mysql.md)
-8. [Using Alpine Linux instead of Debian](docs/alpine.md)
-9. [Using a Makefile](docs/makefile.md)
-10. [Updating the template](docs/updating.md)
-11. [Troubleshooting](docs/troubleshooting.md)
+### Pluggable notifiers
+- Easily add new notifiers by implementing new `NotifierInterface`
+- Auto-discovered and registered via Symfony service tags
+
+### Provider support
+- **Email**: SES, Mailgun (via Symfony Mailer)
+- **SMS**: Twilio Vonage
+
+## Getting Started
+
+### Prerequisites
+- PHP 8.2+
+- Symfony 6+
+- Docker
+
+### Install dependencies
+```bash
+composer install
+```
+
+### Environment variables
+Configure `.env` with:
+```dotenv
+MAIL_FROM=<mail to be used as sender>
+NUMBER_FROM=<phone number to be used as sender>
+
+SES_MAILER_DSN=ses+smtp://username:password@default?region=region
+MAILGUN_MAILER_DSN=mailgun+smtp://username:password@smtp.mailgun.org:port
+
+TWILIO_SID=<twilio sid>
+TWILIO_TOKEN=<twilio token>
+
+NEXMO_SECRET=<vonage secret>
+NEXMO_KEY=<vonage key>
+```
+
+---
+
+## Key components
+
+### `NotifierInterface`
+All providers implement:
+```php
+interface NotifierInterface {
+    public funciton send(Notification $notification): void;
+    public function supportsChannel(string $channel): bool;
+    public function getChannel(): string;
+}
+```
+
+### `FailoverNotifier`
+Wraps a list of notifiers, tries them in order, retries if needed.
+
+### `NotifierRegistry`
+Maps each channel (e.g. `sms`, `email`) to a `FailoverNotifier`
+
+### `NotificationSender`
+Coordinates sending notifications to all specified channels.
+
+### `Notification` Model
+```php
+class Notification
+{
+    public function __construct(
+        public readonly string $userId,
+        public readonly string $message,
+        public array $channels,
+        public readonly ?string $phone = ''
+    ) {
+    }
+}
+```
+
+---
+
+## Testing
+Tests are located in `tests`. Currently, there's only a few basic tests implemented.
+
+- `FailoverNotifierTest.php`
+- `NotifierRegistryTest.php`
+
+Running tests:
+```bash
+php bin/phpunit /path/to/testfile.php
+```
+
+## Extending the system
+
+### Add a new notifier
+1. Implement new notifier with `NotifierInterface`
+2. Configure new record in `services.yaml`
+
+---
+
+## Notes
+- Symfony Mailer handles email failover natively via DSN string
+
+---
+
 
 ## License
-
-Symfony Docker is available under the MIT License.
-
-## Credits
-
-Created by [Kévin Dunglas](https://dunglas.dev), co-maintained by [Maxime Helias](https://twitter.com/maxhelias) and sponsored by [Les-Tilleuls.coop](https://les-tilleuls.coop).
+MIT — Use freely for any purpose.
