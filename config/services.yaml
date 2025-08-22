@@ -50,7 +50,7 @@ services:
     App\Notification\Interface\Cli\SendNotificationCommand:
         tags: [console.command]
         
-    App\Notification\Domain\Service\NotificationSender:
+    App\Notification\Application\Service\NotificationSender:
         arguments:
             $userNotificationsLimiter: '@limiter.user_notifications'
 
