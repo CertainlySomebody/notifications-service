@@ -41,6 +41,7 @@ final class SendNotificationCommand extends Command
         $userId = new Question(
             'Write email address in order to send test notification: ',
         );
+        $userId = $helper->ask($input, $output, $userId);
 
         // SMS number input (if needed)
         $phone = null;
