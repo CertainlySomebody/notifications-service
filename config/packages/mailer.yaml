@@ -1,0 +1,3 @@
+framework:
+    mailer:
+        dsn: 'failover(%env(SES_MAILER_DSN)%,%env(MAILGUN_MAILER_DSN)%)'

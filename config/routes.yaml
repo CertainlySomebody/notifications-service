@@ -1,0 +1,9 @@
+#controllers:
+#    resource:
+#        path: ../src/Notification/Interface/Http/
+#        namespace: App\Notification\Interface\Http\
+#    type: attribute
+    
+notification_attributes:
+    resource: ../src/Notification/Interface/Http/
+    type: attribute
