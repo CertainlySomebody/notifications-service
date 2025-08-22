@@ -46,7 +46,10 @@ final class SendNotificationCommand extends Command
         // SMS number input (if needed)
         $phone = null;
         if (in_array('sms', $channels)) {
-            $phone = $helper->ask($input, $output, new Question('Enter phone number for SMS: '));
+            $phone = new Question(
+                'Enter phone number for SMS: '
+            );
+            $phone = $helper->ask($input, $output, $phone);
         }
 
         // 3rd message question
@@ -55,7 +58,7 @@ final class SendNotificationCommand extends Command
         );
         $message = $helper->ask($input, $output, $message);
 
-        $notification = new Notification($userId, $message, $channels);
+        $notification = new Notification($userId, $message, $channels, $phone);
 
         try {
             $this->sender->send($notification);
