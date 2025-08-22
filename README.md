@@ -42,6 +42,11 @@ This service provides simple notification system capable of sending messages via
 - Symfony 6+
 - Docker
 
+### Run docker containers
+```bash
+docker compose up -d --build
+```
+
 ### Install dependencies
 ```bash
 composer install
@@ -71,7 +76,7 @@ NEXMO_KEY=<vonage key>
 All providers implement:
 ```php
 interface NotifierInterface {
-    public funciton send(Notification $notification): void;
+    public function send(Notification $notification): void;
     public function supportsChannel(string $channel): bool;
     public function getChannel(): string;
 }
