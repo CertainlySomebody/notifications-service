@@ -118,11 +118,48 @@ Running tests:
 php bin/phpunit /path/to/testfile.php
 ```
 
+### Postman
+There is a way to test notifications using postman 
+
+Url for testing:
+```
+http://localhost:8080/notifications
+```
+
+Example body:
+```json
+{
+    "user_id": "testing_mail@gmail.com",
+    "message": "Hello from notification service",
+    "channels": ["sms", "email"],
+    "phone": "+48516257017"
+}
+```
+
+### Command for testing
+The application includes a CLI command for testing purposes. In order to use it you need to enter php container using:
+```bash
+# First command
+docker exec -ti <container_name> bash
+
+# Running command
+php bin/console app:create-notification
+```
+
+The command will guide you through a series of interactive questions, including:
+- Selecting one or more notification channels (e.g. email, sms)
+- Entering user email address
+- (If SMS is selected) providing a phone number
+- Typing the message content
+
+
+
 ## Extending the system
 
 ### Add a new notifier
-1. Implement new notifier with `NotifierInterface`
+1. Implement new notifier with `NotifierInterface` ( example `src/Notification/Infrastructure/Messaging` )
 2. Configure new record in `services.yaml`
+
 
 ---
 
